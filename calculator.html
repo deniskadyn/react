@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор с историей</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .calculator-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .calculator {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 320px;
+        }
+
+        .history {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 300px;
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .history-item {
+            background: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            border-left: 3px solid #667eea;
+        }
+
+        .clear-history {
+            margin-top: 15px;
+            padding: 8px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .clear-history:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .display {
+            margin-bottom: 20px;
+        }
+
+        #expressionInput {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: right;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #expressionInput:focus {
+            border-color: #667eea;
+            background: white;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .digit {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .digit:hover {
+            background: #e0e0e0;
+        }
+
+        .operator {
+            background: #667eea;
+            color: white;
+        }
+
+        .operator:hover {
+            background: #5a67d8;
+        }
+
+        .equals {
+            background: #48bb78;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: #38a169;
+        }
+
+        .clear {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .clear:hover {
+            background: #ff5252;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="calculator">
+            <div class="title">
+                🧮 Калькулятор
+            </div>
+            <div class="display">
+                <input type="text" id="expressionInput" placeholder="0" readonly>
+            </div>
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">C</button>
+                <button class="operator" onclick="appendOperator('/')">/</button>
+                <button class="operator" onclick="appendOperator('*')">*</button>
+                <button class="clear" onclick="deleteLast()">⌫</button>
+
+                <button class="digit" onclick="appendNumber('7')">7</button>
+                <button class="digit" onclick="appendNumber('8')">8</button>
+                <button class="digit" onclick="appendNumber('9')">9</button>
+                <button class="operator" onclick="appendOperator('-')">-</button>
+
+                <button class="digit" onclick="appendNumber('4')">4</button>
+                <button class="digit" onclick="appendNumber('5')">5</button>
+                <button class="digit" onclick="appendNumber('6')">6</button>
+                <button class="operator" onclick="appendOperator('+')">+</button>
+
+                <button class="digit" onclick="appendNumber('1')">1</button>
+                <button class="digit" onclick="appendNumber('2')">2</button>
+                <button class="digit" onclick="appendNumber('3')">3</button>
+                <button class="equals" onclick="calculate()">=</button>
+
+                <button class="digit" onclick="appendNumber('0')">0</button>
+                <button class="digit" onclick="appendNumber('.')">.</button>
+                <button class="operator" onclick="appendOperator('%')">%</button>
+            </div>
+        </div>
+
+        <div class="history">
+            <h3>📜 История действий</h3>
+            <div class="history-list" id="historyList">
+                <div class="history-item" style="color: #999;">История пуста</div>
+            </div>
+            <button class="clear-history" onclick="clearHistory()">Очистить историю</button>
+        </div>
+    </div>
+
+    <script>
+        // Получаем элементы
+        const display = document.getElementById('expressionInput');
+        const historyList = document.getElementById('historyList');
+
+        // Переменная для хранения текущего выражения
+        let currentExpression = '';
+
+        // Функция добавления цифр
+        function appendNumber(number) {
+            currentExpression += number;
+            updateDisplay();
+        }
+
+        // Функция добавления операторов
+        function appendOperator(operator) {
+            if (currentExpression === '' && operator !== '-') {
+                return;
+            }
+
+            // Проверяем, чтобы не было двух операторов подряд
+            const lastChar = currentExpression[currentExpression.length - 1];
+            if (['+', '-', '*', '/', '%'].includes(lastChar)) {
+                // Заменяем последний оператор на новый
+                currentExpression = currentExpression.slice(0, -1) + operator;
+            } else {
+                currentExpression += operator;
+            }
+            updateDisplay();
+        }
+
+        // Функция очистки дисплея
+        function clearDisplay() {
+            currentExpression = '';
+            updateDisplay();
+        }
+
+        // Функция удаления последнего символа
+        function deleteLast() {
+            currentExpression = currentExpression.slice(0, -1);
+            updateDisplay();
+        }
+
+        // Функция обновления дисплея
+        function updateDisplay() {
+            display.value = currentExpression || '0';
+        }
+
+        // Функция добавления в историю (вынесена отдельно)
+        function addToHistory(expression, result) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `${expression} = ${result}`;
+
+            // Удаляем сообщение "История пуста", если оно есть
+            if (historyList.children.length === 1 && historyList.children[0].innerText === 'История пуста') {
+                historyList.innerHTML = '';
+            }
+
+            historyList.appendChild(historyItem);
+            // Автоматическая прокрутка вниз
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+
+        // Функция очистки истории
+        function clearHistory() {
+            historyList.innerHTML = '<div class="history-item" style="color: #999;">История пуста</div>';
+        }
+
+        // Функция для выполнения математических операций
+        function add(a, b) {
+            return a + b;
+        }
+
+        function subtract(a, b) {
+            return a - b;
+        }
+
+        function multiply(a, b) {
+            return a * b;
+        }
+
+        function divide(a, b) {
+            if (b === 0) {
+                throw new Error('Деление на ноль!');
+            }
+            return a / b;
+        }
+
+        function modulo(a, b) {
+            return a % b;
+        }
+
+        // Главная функция вычисления (с использованием switch)
+        function calculate() {
+            if (!currentExpression) {
+                return;
+            }
+
+            try {
+                // Разбираем выражение на числа и оператор
+                let operator = null;
+                let operatorIndex = -1;
+
+                // Находим оператор (последний, чтобы правильно обработать отрицательные числа)
+                const operators = ['+', '-', '*', '/', '%'];
+                for (let i = currentExpression.length - 1; i >= 0; i--) {
+                    if (operators.includes(currentExpression[i]) && i > 0) {
+                        // Проверяем, что это не унарный минус
+                        if (currentExpression[i] === '-' && operators.includes(currentExpression[i-1])) {
+                            continue;
+                        }
+                        operator = currentExpression[i];
+                        operatorIndex = i;
+                        break;
+                    }
+                }
+
+                if (!operator) {
+                    // Если нет оператора, просто выводим число
+                    addToHistory(currentExpression, currentExpression);
+                    clearDisplay();
+                    return;
+                }
+
+                // Разделяем на левую и правую части
+                const leftStr = currentExpression.substring(0, operatorIndex);
+                const rightStr = currentExpression.substring(operatorIndex + 1);
+
+                const left = parseFloat(leftStr);
+                const right = parseFloat(rightStr);
+
+                if (isNaN(left) || isNaN(right)) {
+                    throw new Error('Некорректное выражение');
+                }
+
+                let result;
+
+                // Используем switch для выбора операции
+                switch (operator) {
+                    case '+':
+                        result = add(left, right);
+                        break;
+                    case '-':
+                        result = subtract(left, right);
+                        break;
+                    case '*':
+                        result = multiply(left, right);
+                        break;
+                    case '/':
+                        result = divide(left, right);
+                        break;
+                    case '%':
+                        result = modulo(left, right);
+                        break;
+                    default:
+                        throw new Error('Неизвестный оператор');
+                }
+
+                // Округляем результат до 10 знаков после запятой
+                result = Math.round(result * 10000000000) / 10000000000;
+
+                // Добавляем в историю (вызов отдельной функции)
+                addToHistory(currentExpression, result);
+
+                // Очищаем и устанавливаем результат как новое выражение
+                currentExpression = result.toString();
+                updateDisplay();
+
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Добавляем возможность ввода с клавиатуры
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            if (key >= '0' && key <= '9') {
+                appendNumber(key);
+            } else if (key === '.') {
+                appendNumber('.');
+            } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                appendOperator(key);
+            } else if (key === '%') {
+                appendOperator('%');
+            } else if (key === 'Enter' || key === '=') {
+                calculate();
+            } else if (key === 'Escape') {
+                clearDisplay();
+            } else if (key === 'Backspace') {
+                deleteLast();
+            }
+        });
+    </script>
+</body>
+</html>
